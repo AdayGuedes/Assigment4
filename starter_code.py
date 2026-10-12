@@ -12,8 +12,16 @@ import tracemalloc
 # ============================================================================
 # PART 1: SORTING IMPLEMENTATIONS
 # ============================================================================
+def identity(x):
+    return x
 
-def bubble_sort(arr):
+def get_price(product):
+    return product["price"]
+
+def positions_for_price(sorted_products, price):
+    return [p["original_position"] for p in sorted_products if p["price"] == price]
+
+def bubble_sort(arr, key=identity):
     """
     Sort array using bubble sort algorithm.
     
@@ -33,10 +41,23 @@ def bubble_sort(arr):
     # Hint: Use nested loops - outer loop for passes, inner loop for comparisons
     # Hint: Compare adjacent elements and swap if left > right
     
-    pass  # Delete this and write your code
+    arr = arr.copy()
+    n = len(arr)
+
+    for i in range(n):
+        swapped = False
+        for j in range(0, n - i - 1):
+            if key(arr[j]) > key(arr[j + 1]):
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                swapped = True
+
+        if not swapped:
+            break
+
+    return arr
 
 
-def selection_sort(arr):
+def selection_sort(arr, key=identity):
     """
     Sort array using selection sort algorithm.
     
@@ -55,10 +76,20 @@ def selection_sort(arr):
     # TODO: Implement selection sort
     # Hint: Find minimum element in unsorted portion, swap it with first unsorted element
     
-    pass  # Delete this and write your code
+    arr = arr.copy()
+    n = len(arr)
+
+    for i in range(n):
+        min_index = i
+        for j in range(i + 1, n):
+            if key(arr[min_index]) > key(arr[j]):
+                min_index = j
+        arr[i], arr[min_index] = arr[min_index], arr[i]
+
+    return arr
 
 
-def insertion_sort(arr):
+def insertion_sort(arr, key=identity):
     """
     Sort array using insertion sort algorithm.
     
@@ -77,10 +108,21 @@ def insertion_sort(arr):
     # TODO: Implement insertion sort
     # Hint: Start from second element, insert it into correct position in sorted portion
     
-    pass  # Delete this and write your code
+    arr = arr.copy()
+    n = len(arr)
+    for i in range(1 , n):
+        current = arr[i]
+        j = i - 1
+        while j >= 0 and key(arr[j]) > key(current):
+            arr[j + 1] = arr[j]
+            j -= 1
+        arr[j + 1] = current
+
+    return arr
 
 
-def merge_sort(arr):
+
+def merge_sort(arr, key=identity):
     """
     Sort array using merge sort algorithm.
     
@@ -100,8 +142,43 @@ def merge_sort(arr):
     # Hint: Base case - if array has 1 or 0 elements, it's already sorted
     # Hint: Recursive case - split array in half, sort each half, merge sorted halves
     # Hint: You'll need a helper function to merge two sorted arrays
-    
-    pass  # Delete this and write your code
+    arr = arr.copy()
+    n = len(arr)
+
+    if n > 1:
+        h = n // 2
+        L = arr[:h]
+        R = arr[h:]
+
+        L = merge_sort(L, key)
+        R = merge_sort(R, key)
+
+        i = 0
+        j = 0
+        k = 0
+
+        while i < len(L) and j < len(R):
+            if key(L[i]) <= key(R[j]):
+                arr[k] = L[i]
+                i += 1
+            else:
+                arr[k] = R[j]
+                j += 1
+
+            k += 1
+
+        while i < len(L):
+            arr[k] = L[i]
+            i += 1
+            k += 1
+
+        while j < len(R):
+            arr[k] = R[j]
+            j += 1
+            k += 1
+    return arr
+
+
 
 
 # ============================================================================
@@ -134,13 +211,21 @@ def demonstrate_stability():
     # Hint: For stable sort: items with price 1999 should stay in order (A before C before E)
     
     results = {
-        "bubble_sort": "Not tested",
-        "selection_sort": "Not tested", 
-        "insertion_sort": "Not tested",
-        "merge_sort": "Not tested"
+        "bubble_sort": bubble_sort,
+        "selection_sort": selection_sort, 
+        "insertion_sort": insertion_sort,
+        "merge_sort": merge_sort
     }
     
     # TODO: Test each algorithm and update results dictionary with "Stable" or "Unstable"
+    for name, func in results.items():
+        sorted_products = func(products, key=get_price)
+        stable = True
+        for price in (999, 1999):
+            positions = positions_for_price(sorted_products, price)
+            if positions != sorted(positions):
+                stable = False
+        results[name] = "Stable" if stable else "Unstable"
     
     return results
 
@@ -287,8 +372,8 @@ if __name__ == "__main__":
     
     # Uncomment these as you complete each part:
     
-    # test_sorting_correctness()
-    # benchmark_all_datasets()
-    # analyze_stability()
+    test_sorting_correctness()
+    benchmark_all_datasets()
+    analyze_stability()
     
     print("\n⚠ Uncomment the test functions in the main block to run benchmarks!")
